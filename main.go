@@ -52,9 +52,12 @@ func main() {
 
 	for key, val := range conf["list"] {
 		var full_url = url + params + "list=" + val
+		var file_name = "/tmp" + key + ".gz"
+
 		log.Printf("downloading %s", key)
 		data, err := get(full_url)
-		write(data, "/tmp/"+key+".gz")
+
+		write(data, file_name)
 		errr(err, "Error getting "+full_url)
 	}
 }
