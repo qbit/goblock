@@ -5,6 +5,7 @@ import (
 	"github.com/gokyle/goconfig"
 	"io/ioutil"
 	"log"
+	// "compress/gzip"
 	"net/http"
 	"os"
 )
@@ -24,6 +25,7 @@ func write(data []byte, path string) error {
 		return err
 	}
 
+	// close this britch when we are done with parent func
 	defer file.Close()
 
 	w := bufio.NewWriter(file)
@@ -54,6 +56,7 @@ func main() {
 		var full_url = url + params + "list=" + val
 		var file_name = "/tmp" + key + ".gz"
 
+		// need to change this into a single piped gzip operation
 		log.Printf("downloading %s", key)
 		data, err := get(full_url)
 
