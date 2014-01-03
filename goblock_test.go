@@ -42,7 +42,8 @@ func TestGet(t *testing.T) {
 
 	defer ts.Close()
 
-	_, err := get(ts.URL, "/tmp/awesome")
+	bytes, err := get(ts.URL, "/tmp/awesome")
+	fmt.Println("put %d into /tmp/awesome", bytes)
 	if err != nil {
 		fmt.Printf("%v\n", err)
 		t.FailNow()
