@@ -1,31 +1,57 @@
-package goblock
+package main
 
 import (
-	"testing"
+	"bytes"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"compress/gzip"
+	"io/ioutil"
+	"testing"
 )
 
-func TestGet(t *testing.T) {
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintln(w, "Hi")
-	}))
-
-	defer ts.Close()
-
-	data, err := get(ts.URL)
+func fileContains(t *testing.T, src string, contents string) (bool) {
+	buf, err := ioutil.ReadFile(src)
 	if err != nil {
 		fmt.Printf("%v\n", err)
 		t.FailNow()
 	}
 
-	var answer = string(data)
+	str := string(buf)
 
-	if answer != "Hi\n" {
+	if str == contents {
+		return true
+	} else {
+		return false
+	}
+}
+
+func TestGet(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var b bytes.Buffer
+
+		gz := gzip.NewWriter(&b)
+		gz.Write([]byte("Hi"))
+
+		defer gz.Close()
+
+		var s = string(b.Bytes())
+
+		fmt.Fprintln(w, s)
+	}))
+
+	defer ts.Close()
+
+	_, err := get(ts.URL, "/tmp/awesome")
+	if err != nil {
+		fmt.Printf("%v\n", err)
+		t.FailNow()
+	}
+
+	if fileContains(t, "/tmp/awesome", "Hi\n") {
+		fmt.Println("OK")
+	} else {
 		fmt.Println("Not OK!")
 		t.FailNow()
-	} else {
-		fmt.Println("OK")
 	}
 }
