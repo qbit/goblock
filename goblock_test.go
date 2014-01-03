@@ -1,7 +1,6 @@
 package goblock
 
 import (
-	"log"
 	"testing"
 	"fmt"
 	"net/http"
@@ -17,14 +16,16 @@ func TestGet(t *testing.T) {
 
 	data, err := get(ts.URL)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Printf("%v\n", err)
+		t.FailNow()
 	}
 
-	var answer string = string(data)
+	var answer = string(data)
 
-	if answer != "Hi" {
-		log.Fatal("Not OK!")
+	if answer != "Hi\n" {
+		fmt.Println("Not OK!")
+		t.FailNow()
 	} else {
-		log.Println("OK")
+		fmt.Println("OK")
 	}
 }
