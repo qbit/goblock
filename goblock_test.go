@@ -2,15 +2,16 @@ package main
 
 import (
 	"bytes"
+	"compress/gzip"
 	"fmt"
+	"io"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
-	"compress/gzip"
-	"io/ioutil"
 	"testing"
 )
 
-func fileContains(t *testing.T, src string, contents string) (bool) {
+func fileContains(t *testing.T, src string, contents string) bool {
 	buf, err := ioutil.ReadFile(src)
 	if err != nil {
 		fmt.Printf("%v\n", err)
@@ -28,16 +29,15 @@ func fileContains(t *testing.T, src string, contents string) (bool) {
 
 func TestGet(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var b bytes.Buffer
-
-		gz := gzip.NewWriter(&b)
-		gz.Write([]byte("Hi"))
+		b := bytes.NewBufferString("Hi")
+		gz := gzip.NewWriter(w)
 
 		defer gz.Close()
 
-		var s = string(b.Bytes())
-
-		fmt.Fprintln(w, s)
+		_, err := io.Copy(gz, b)
+		if err != nil {
+			fmt.Printf("Failed to write gzip response: %v\n", err)
+		}
 	}))
 
 	defer ts.Close()
@@ -49,7 +49,7 @@ func TestGet(t *testing.T) {
 		t.FailNow()
 	}
 
-	if fileContains(t, "/tmp/awesome", "Hi\n") {
+	if fileContains(t, "/tmp/awesome", "Hi") {
 		fmt.Println("OK")
 	} else {
 		fmt.Println("Not OK!")

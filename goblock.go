@@ -13,18 +13,19 @@ func get(src string, dest string) (int64, error) {
 	resp, err := http.Get(src)
 	errr(err, "Can't make http request")
 
-	file, err2 := os.Create(dest)
-	errr(err2, "Can't create file!")
+	file, err := os.Create(dest)
+	errr(err, "Can't create file!")
 
 	defer resp.Body.Close()
 
-	gz, err3 := gzip.NewReader(resp.Body)
-	errr(err3, "Can't uncompress file!")
+	gz, err := gzip.NewReader(resp.Body)
+	errr(err, "Can't uncompress file!")
 
 	defer gz.Close()
 	defer file.Close()
 
-	return io.Copy(file, gz)
+	n, err := io.Copy(file, gz)
+	return n, err
 }
 
 func errr(e error, msg string) {
