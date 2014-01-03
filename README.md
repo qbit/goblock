@@ -3,6 +3,8 @@ goblock
 
 Go app to grab block lists from iblocklist.com
 
+[![Build Status](https://drone.io/github.com/qbit/goblock/status.png)](https://drone.io/github.com/qbit/goblock/latest)
+
 ### usage ###
 
 goblock expects a config file in CWD with the below format:
