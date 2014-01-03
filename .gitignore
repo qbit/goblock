@@ -1,3 +1,4 @@
+*.test
 goblock
 config.ini
 src
