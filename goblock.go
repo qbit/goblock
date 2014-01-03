@@ -1,37 +1,30 @@
-package goblock
+package main
 
 import (
-	"bufio"
+	"compress/gzip"
 	"github.com/gokyle/goconfig"
-	"io/ioutil"
+	"io"
 	"log"
-	// "compress/gzip"
 	"net/http"
 	"os"
 )
 
-func get(src string) ([]byte, error) {
+func get(src string, dest string) (int64, error) {
 	resp, err := http.Get(src)
 	errr(err, "Can't make http request")
 
+	file, err2 := os.Create(dest)
+	errr(err2, "Can't create file!")
+
 	defer resp.Body.Close()
 
-	return ioutil.ReadAll(resp.Body)
-}
+	gz, err3 := gzip.NewReader(resp.Body)
+	errr(err3, "Can't uncompress file!")
 
-func write(data []byte, path string) error {
-	file, err := os.Create(path)
-	if err != nil {
-		return err
-	}
-
-	// close this britch when we are done with parent func
+	defer gz.Close()
 	defer file.Close()
 
-	w := bufio.NewWriter(file)
-	file.Write(data)
-
-	return w.Flush()
+	return io.Copy(file, gz)
 }
 
 func errr(e error, msg string) {
@@ -54,13 +47,12 @@ func main() {
 
 	for key, val := range conf["list"] {
 		var full_url = url + params + "list=" + val
-		var file_name = "/tmp" + key + ".gz"
+		var file_name = "/tmp/" + key
 
-		// need to change this into a single piped gzip operation
 		log.Printf("downloading %s", key)
-		data, err := get(full_url)
+		written, err2 := get(full_url, file_name)
+		errr(err2, "Can't write file!")
 
-		write(data, file_name)
-		errr(err, "Error getting "+full_url)
+		log.Printf("%d written to %s", written, file_name)
 	}
 }
