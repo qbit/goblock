@@ -13,7 +13,7 @@ func get(src string, dest string) (int64, error) {
 	resp, err := http.Get(src)
 	errr(err, "Can't make http request")
 
-	file, err := os.Create(dest)
+	file, err := os.OpenFile(dest, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
 	errr(err, "Can't create file!")
 
 	defer resp.Body.Close()
@@ -48,12 +48,10 @@ func main() {
 
 	for key, val := range conf["list"] {
 		var full_url = url + params + "list=" + val
-		var file_name = "/tmp/" + key
+		var file_name = conf["global"]["destination"]
 
 		log.Printf("downloading %s", key)
-		written, err2 := get(full_url, file_name)
+		_, err2 := get(full_url, file_name)
 		errr(err2, "Can't write file!")
-
-		log.Printf("%d written to %s", written, file_name)
 	}
 }
