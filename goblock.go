@@ -9,49 +9,59 @@ import (
 	"os"
 )
 
-func get(src string, dest string) (int64, error) {
+var elog = log.New(os.Stderr, "[!]: ", 0)
+
+func get(src, dest string) (int64, error) {
 	resp, err := http.Get(src)
-	errr(err, "Can't make http request")
+	if err != nil {
+		elog.Printf("%v - %v", "Can't make http request", err)
+	}
 
 	file, err := os.OpenFile(dest, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
-	errr(err, "Can't create file!")
+	if err != nil {
+		elog.Printf("%v - %v", "Can't create file!", err)
+	}
 
 	defer resp.Body.Close()
 
 	gz, err := gzip.NewReader(resp.Body)
-	errr(err, "Can't uncompress file!")
+	if err != nil {
+		elog.Printf("%v - %v", "Can't uncompress file!", err)
+	}
 
 	defer gz.Close()
 	defer file.Close()
 
-	n, err := io.Copy(file, gz)
-	return n, err
-}
-
-func errr(e error, msg string) {
-	if e != nil {
-		log.Printf("[!]: %s - %s", msg, e)
-	}
+	// n, err := io.Copy(file, gz)
+	// return n, err
+	return io.Copy(file, gz)
 }
 
 func main() {
-	var conf, err = goconfig.ParseFile("config.ini")
-	var url = conf["global"]["url"]
-	var params string = "?"
+	conf, err := goconfig.ParseFile("config.ini")
+	if err != nil {
+		elog.Printf("%v - %v", "Can't parse config file!", err)
+	}
+
+	url := conf["global"]["url"]
+	file_name := conf["global"]["destination"]
+	params := "?"
+
+	os.Remove(file_name)
 
 	for key, val := range conf["params"] {
 		params = params + key + "=" + val + "&"
 	}
 
-	errr(err, "Can't parse config file!")
 	log.Printf("Getting lists from: %s", url)
 
 	for key, val := range conf["list"] {
-		var full_url = url + params + "list=" + val
-		var file_name = conf["global"]["destination"]
+		full_url := url + params + "list=" + val
 
 		log.Printf("downloading %s", key)
-		_, err2 := get(full_url, file_name)
-		errr(err2, "Can't write file!")
+		_, err := get(full_url, file_name)
+		if err != nil {
+			elog.Printf("%v - %v", "Can't write file!", err)
+		}
 	}
 }
