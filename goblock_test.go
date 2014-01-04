@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 )
 
@@ -41,6 +42,8 @@ func TestGet(t *testing.T) {
 	}))
 
 	defer ts.Close()
+
+	os.Remove("/tmp/awesome")
 
 	bytes, err := get(ts.URL, "/tmp/awesome")
 	fmt.Printf("put %d into /tmp/awesome\n", bytes)
