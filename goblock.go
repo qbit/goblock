@@ -2,6 +2,7 @@ package main
 
 import (
 	"compress/gzip"
+	"flag"
 	"github.com/gokyle/goconfig"
 	"io"
 	"log"
@@ -30,36 +31,43 @@ func get(src, dest string) (int64, error) {
 	defer gz.Close()
 	defer file.Close()
 
-	// n, err := io.Copy(file, gz)
-	// return n, err
 	return io.Copy(file, gz)
 }
 
 func main() {
-	conf, err := goconfig.ParseFile("config.ini")
+	var cfile = flag.String("config", "config.ini", "Full path to config file.")
+	var debug = flag.Bool("v", false, "show logging info.")
+	flag.Parse()
+	conf, err := goconfig.ParseFile(*cfile)
 	if err != nil {
 		log.Fatalf("Can't parse config file! - %v", err)
 	}
 
 	url := conf["global"]["url"]
-	file_name := conf["global"]["destination"]
+	dfile_name := conf["global"]["destination"]
 	params := "?"
 
-	os.Remove(file_name)
+	os.Remove(dfile_name)
 
 	for key, val := range conf["params"] {
 		params = params + key + "=" + val + "&"
 	}
 
-	log.Printf("Getting lists from: %s", url)
+	if *debug {
+		log.Printf("Getting lists from: %s", url)
+	}
 
 	for key, val := range conf["list"] {
 		full_url := url + params + "list=" + val
 
-		log.Printf("downloading %s", key)
-		_, err := get(full_url, file_name)
+		if *debug {
+			log.Printf("downloading %s", key)
+		}
+		_, err := get(full_url, dfile_name)
 		if err != nil {
-			log.Fatalf("Can't write file! - %v", err)
+			if *debug {
+				log.Fatalf("Can't write file! - %v", err)
+			}
 		}
 	}
 }
